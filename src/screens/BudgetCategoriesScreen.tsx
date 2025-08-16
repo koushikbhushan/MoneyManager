@@ -1,24 +1,52 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAppContext } from '../context/AppContext';
 import { BudgetCategory } from '../types';
+import BudgetCategoryForm from '../components/BudgetCategoryForm';
 
 const BudgetCategoriesScreen = () => {
-  const { budgetCategories } = useAppContext();
+  const { budgetCategories, loading, error, addBudgetCategory, updateBudgetCategory, deleteBudgetCategory } = useAppContext();
+  const [formVisible, setFormVisible] = useState(false);
+  const [editCategory, setEditCategory] = useState<BudgetCategory | null>(null);
+
+  const handleAdd = () => {
+    setEditCategory(null);
+    setFormVisible(true);
+  };
+
+  const handleEdit = (category: BudgetCategory) => {
+    setEditCategory(category);
+    setFormVisible(true);
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete Category', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteBudgetCategory(id) },
+    ]);
+  };
+
+  const handleSubmit = async (data: { name: string; budget: number; spent: number }) => {
+    if (editCategory) {
+      await updateBudgetCategory({ ...editCategory, ...data });
+    } else {
+      await addBudgetCategory(data);
+    }
+    setFormVisible(false);
+  };
 
   const renderCategoryItem = ({ item }: { item: BudgetCategory }) => {
     const percentage = (item.spent / item.budget) * 100;
-    
     return (
-      <TouchableOpacity style={styles.categoryItem}>
+      <TouchableOpacity style={styles.categoryItem} onPress={() => handleEdit(item)} onLongPress={() => handleDelete(item.id)}>
         <View style={styles.categoryHeader}>
           <Text style={styles.categoryName}>{item.name}</Text>
           <Text style={styles.categoryAmount}>
             ${item.spent.toFixed(2)} / ${item.budget.toFixed(2)}
           </Text>
         </View>
-        
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View 
@@ -43,7 +71,8 @@ const BudgetCategoriesScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Budget Categories</Text>
       </View>
-      
+      {loading && <ActivityIndicator size="large" color="#2e7d32" style={{ margin: 20 }} />}
+      {error && <Text style={{ color: 'red', textAlign: 'center', margin: 10 }}>{error}</Text>}
       {budgetCategories.length > 0 ? (
         <FlatList
           data={budgetCategories}
@@ -51,15 +80,20 @@ const BudgetCategoriesScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
         />
-      ) : (
+      ) : !loading ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No budget categories yet</Text>
         </View>
-      )}
-      
-      <TouchableOpacity style={styles.addButton}>
+      ) : null}
+      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <Text style={styles.addButtonText}>+ Add Category</Text>
       </TouchableOpacity>
+      <BudgetCategoryForm
+        visible={formVisible}
+        onClose={() => setFormVisible(false)}
+        onSubmit={handleSubmit}
+        initial={editCategory ? { name: editCategory.name, budget: editCategory.budget, spent: editCategory.spent } : undefined}
+      />
     </View>
   );
 };

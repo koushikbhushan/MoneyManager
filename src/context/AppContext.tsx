@@ -1,115 +1,138 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BudgetCategory, Investment } from '../types';
-
-// Mock data for initial state
-const initialBudgetCategories: BudgetCategory[] = [
-  { id: '1', name: 'Housing', budget: 1200, spent: 1000 },
-  { id: '2', name: 'Food', budget: 500, spent: 350 },
-  { id: '3', name: 'Transportation', budget: 300, spent: 250 },
-  { id: '4', name: 'Entertainment', budget: 200, spent: 150 },
-  { id: '5', name: 'Utilities', budget: 250, spent: 220 },
-];
-
-const initialInvestments: Investment[] = [
-  { 
-    id: '1', 
-    name: 'Apple Inc.', 
-    ticker: 'AAPL', 
-    type: 'Stock', 
-    value: 5000, 
-    initialInvestment: 4000,
-    returnPercentage: 25
-  },
-  { 
-    id: '2', 
-    name: 'S&P 500 ETF', 
-    ticker: 'SPY', 
-    type: 'ETF', 
-    value: 10000, 
-    initialInvestment: 9000,
-    returnPercentage: 11.11
-  },
-  { 
-    id: '3', 
-    name: 'Bitcoin', 
-    ticker: 'BTC', 
-    type: 'Cryptocurrency', 
-    value: 3000, 
-    initialInvestment: 2000,
-    returnPercentage: 50
-  },
-  { 
-    id: '4', 
-    name: '401(k)', 
-    ticker: 'N/A', 
-    type: 'Retirement', 
-    value: 50000, 
-    initialInvestment: 45000,
-    returnPercentage: 11.11
-  },
-];
+import * as api from '../utils/api';
 
 // Define the context type
 interface AppContextType {
   budgetCategories: BudgetCategory[];
   investments: Investment[];
-  addBudgetCategory: (category: Omit<BudgetCategory, 'id'>) => void;
-  updateBudgetCategory: (category: BudgetCategory) => void;
-  deleteBudgetCategory: (id: string) => void;
-  addInvestment: (investment: Omit<Investment, 'id'>) => void;
-  updateInvestment: (investment: Investment) => void;
-  deleteInvestment: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  fetchAll: () => void;
+  addBudgetCategory: (category: Omit<BudgetCategory, 'id'>) => Promise<void>;
+  updateBudgetCategory: (category: BudgetCategory) => Promise<void>;
+  deleteBudgetCategory: (id: string) => Promise<void>;
+  addInvestment: (investment: Omit<Investment, 'id'>) => Promise<void>;
+  updateInvestment: (investment: Investment) => Promise<void>;
+  deleteInvestment: (id: string) => Promise<void>;
 }
 
-// Create the context
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-// Provider component
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>(initialBudgetCategories);
-  const [investments, setInvestments] = useState<Investment[]>(initialInvestments);
+  const [budgetCategories, setBudgetCategories] = useState<BudgetCategory[]>([]);
+  const [investments, setInvestments] = useState<Investment[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [cats, invs] = await Promise.all([
+        api.fetchBudgetCategories(),
+        api.fetchInvestments(),
+      ]);
+      setBudgetCategories(cats);
+      setInvestments(invs);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
 
   // Budget category functions
-  const addBudgetCategory = (category: Omit<BudgetCategory, 'id'>) => {
-    const newCategory = {
-      ...category,
-      id: Date.now().toString(), // Simple ID generation
-    };
-    setBudgetCategories([...budgetCategories, newCategory]);
+  const addBudgetCategory = async (category: Omit<BudgetCategory, 'id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.addBudgetCategory(category);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to add category');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateBudgetCategory = (category: BudgetCategory) => {
-    setBudgetCategories(
-      budgetCategories.map((item) => (item.id === category.id ? category : item))
-    );
+  const updateBudgetCategory = async (category: BudgetCategory) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.updateBudgetCategory(category.id, category);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update category');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteBudgetCategory = (id: string) => {
-    setBudgetCategories(budgetCategories.filter((item) => item.id !== id));
+  const deleteBudgetCategory = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.deleteBudgetCategory(id);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete category');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Investment functions
-  const addInvestment = (investment: Omit<Investment, 'id'>) => {
-    const newInvestment = {
-      ...investment,
-      id: Date.now().toString(), // Simple ID generation
-    };
-    setInvestments([...investments, newInvestment]);
+  const addInvestment = async (investment: Omit<Investment, 'id'>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.addInvestment(investment);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to add investment');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const updateInvestment = (investment: Investment) => {
-    setInvestments(
-      investments.map((item) => (item.id === investment.id ? investment : item))
-    );
+  const updateInvestment = async (investment: Investment) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.updateInvestment(investment.id, investment);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to update investment');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const deleteInvestment = (id: string) => {
-    setInvestments(investments.filter((item) => item.id !== id));
+  const deleteInvestment = async (id: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await api.deleteInvestment(id);
+      await fetchAll();
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete investment');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
     budgetCategories,
     investments,
+    loading,
+    error,
+    fetchAll,
     addBudgetCategory,
     updateBudgetCategory,
     deleteBudgetCategory,

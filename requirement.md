@@ -9,6 +9,11 @@
 
 * Use the best language which suits for this requirement.
 
+* Develop required backend system to store the user data securely.
+
+* Make sure that the application has required security measures in place to protect user data and privacy.
+
+
 #### Phase 2
 * Integrate with financial institutions to get spending and investment details.
 

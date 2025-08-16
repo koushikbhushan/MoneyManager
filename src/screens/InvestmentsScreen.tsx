@@ -1,17 +1,47 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAppContext } from '../context/AppContext';
 import { Investment } from '../types';
+import InvestmentForm from '../components/InvestmentForm';
 
 const InvestmentsScreen = () => {
-  const { investments } = useAppContext();
+  const { investments, loading, error, addInvestment, updateInvestment, deleteInvestment } = useAppContext();
+  const [formVisible, setFormVisible] = useState(false);
+  const [editInvestment, setEditInvestment] = useState<Investment | null>(null);
+
+  const handleAdd = () => {
+    setEditInvestment(null);
+    setFormVisible(true);
+  };
+
+  const handleEdit = (investment: Investment) => {
+    setEditInvestment(investment);
+    setFormVisible(true);
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete Investment', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteInvestment(id) },
+    ]);
+  };
+
+  const handleSubmit = async (data: { name: string; ticker: string; type: string; value: number; initialInvestment: number; returnPercentage: number }) => {
+    const investmentData = { ...data, type: data.type as any };
+    if (editInvestment) {
+      await updateInvestment({ ...editInvestment, ...investmentData });
+    } else {
+      await addInvestment(investmentData);
+    }
+    setFormVisible(false);
+  };
 
   const renderInvestmentItem = ({ item }: { item: Investment }) => {
     const isPositive = item.returnPercentage >= 0;
-    
     return (
-      <TouchableOpacity style={styles.investmentItem}>
+      <TouchableOpacity style={styles.investmentItem} onPress={() => handleEdit(item)} onLongPress={() => handleDelete(item.id)}>
         <View style={styles.investmentHeader}>
           <View>
             <Text style={styles.investmentName}>{item.name}</Text>
@@ -27,17 +57,14 @@ const InvestmentsScreen = () => {
             </Text>
           </View>
         </View>
-        
         <View style={styles.investmentDetails}>
           <Text style={styles.detailLabel}>Initial Investment</Text>
           <Text style={styles.detailValue}>${item.initialInvestment.toLocaleString()}</Text>
         </View>
-        
         <View style={styles.investmentDetails}>
           <Text style={styles.detailLabel}>Current Value</Text>
           <Text style={styles.detailValue}>${item.value.toLocaleString()}</Text>
         </View>
-        
         <View style={styles.investmentDetails}>
           <Text style={styles.detailLabel}>Gain/Loss</Text>
           <Text style={[
@@ -61,7 +88,6 @@ const InvestmentsScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Investments</Text>
       </View>
-      
       <View style={styles.summaryContainer}>
         <View style={styles.summaryItem}>
           <Text style={styles.summaryLabel}>Total Value</Text>
@@ -77,7 +103,8 @@ const InvestmentsScreen = () => {
           </Text>
         </View>
       </View>
-      
+      {loading && <ActivityIndicator size="large" color="#2e7d32" style={{ margin: 20 }} />}
+      {error && <Text style={{ color: 'red', textAlign: 'center', margin: 10 }}>{error}</Text>}
       {investments.length > 0 ? (
         <FlatList
           data={investments}
@@ -85,15 +112,27 @@ const InvestmentsScreen = () => {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
         />
-      ) : (
+      ) : !loading ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No investments yet</Text>
         </View>
-      )}
-      
-      <TouchableOpacity style={styles.addButton}>
+      ) : null}
+      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
         <Text style={styles.addButtonText}>+ Add Investment</Text>
       </TouchableOpacity>
+      <InvestmentForm
+        visible={formVisible}
+        onClose={() => setFormVisible(false)}
+        onSubmit={handleSubmit}
+        initial={editInvestment ? {
+          name: editInvestment.name,
+          ticker: editInvestment.ticker,
+          type: editInvestment.type,
+          value: editInvestment.value,
+          initialInvestment: editInvestment.initialInvestment,
+          returnPercentage: editInvestment.returnPercentage,
+        } : undefined}
+      />
     </View>
   );
 };
