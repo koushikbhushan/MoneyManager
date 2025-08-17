@@ -4,28 +4,32 @@ import { View, Text, TextInput, StyleSheet, TouchableOpacity, Modal } from 'reac
 interface Props {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (data: { name: string; budget: number; spent: number }) => void;
-  initial?: { name: string; budget: number; spent: number };
+  onSubmit: (data: { name: string; budget: number }) => void;
+  initial?: { name: string; budget: number };
 }
+
 
 const BudgetCategoryForm: React.FC<Props> = ({ visible, onClose, onSubmit, initial }) => {
   const [name, setName] = useState(initial?.name || '');
   const [budget, setBudget] = useState(initial?.budget?.toString() || '');
-  const [spent, setSpent] = useState(initial?.spent?.toString() || '0');
+
+  React.useEffect(() => {
+    setName(initial?.name || '');
+    setBudget(initial?.budget?.toString() || '');
+  }, [initial, visible]);
 
   const handleSave = () => {
     if (!name || !budget) return;
-    onSubmit({ name, budget: Number(budget), spent: Number(spent) });
+    onSubmit({ name, budget: Number(budget) });
     setName('');
     setBudget('');
-    setSpent('0');
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.overlay}>
         <View style={styles.form}>
-          <Text style={styles.title}>{initial ? 'Edit' : 'Add'} Category</Text>
+          <Text style={styles.title}>{initial && initial.name ? 'Edit' : 'Add'} Category</Text>
           <TextInput
             style={styles.input}
             placeholder="Category Name"
@@ -39,13 +43,7 @@ const BudgetCategoryForm: React.FC<Props> = ({ visible, onClose, onSubmit, initi
             onChangeText={setBudget}
             keyboardType="numeric"
           />
-          <TextInput
-            style={styles.input}
-            placeholder="Spent Amount"
-            value={spent}
-            onChangeText={setSpent}
-            keyboardType="numeric"
-          />
+          {/* Spent field removed for new model */}
           <View style={styles.buttonRow}>
             <TouchableOpacity style={styles.button} onPress={onClose}>
               <Text style={styles.buttonText}>Cancel</Text>

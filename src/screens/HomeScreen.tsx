@@ -4,13 +4,16 @@ import { StatusBar } from 'expo-status-bar';
 import { useAppContext } from '../context/AppContext';
 
 const HomeScreen = () => {
-  const { budgetCategories, investments } = useAppContext();
-  
-  // Calculate total budget and spent
-  const totalBudget = budgetCategories.reduce((sum, category) => sum + category.budget, 0);
-  const totalSpent = budgetCategories.reduce((sum, category) => sum + category.spent, 0);
+  const { monthlyBudget, investments } = useAppContext();
+
+  // Calculate total budget and spent from monthlyBudget
+  const totalBudget = monthlyBudget ? monthlyBudget.categories.reduce((sum, c) => sum + c.budget, 0) : 0;
+  const totalSpent = monthlyBudget ? monthlyBudget.items.reduce((sum, item) => sum + item.amount, 0) : 0;
   const spentPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-  
+
+  // Recent transactions (sorted by date desc)
+  const recentItems = monthlyBudget ? [...monthlyBudget.items].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 3) : [];
+
   // Calculate total investment value
   const totalInvestmentValue = investments.reduce((sum, investment) => sum + investment.value, 0);
   const totalInitialInvestment = investments.reduce((sum, investment) => sum + investment.initialInvestment, 0);
@@ -51,11 +54,11 @@ const HomeScreen = () => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Recent Transactions</Text>
         <View style={styles.card}>
-          {budgetCategories.length > 0 ? (
-            budgetCategories.slice(0, 3).map((category) => (
-              <View key={category.id} style={styles.transactionItem}>
-                <Text style={styles.transactionName}>{category.name}</Text>
-                <Text style={styles.transactionAmount}>-${category.spent.toLocaleString()}</Text>
+          {recentItems.length > 0 ? (
+            recentItems.map((item) => (
+              <View key={item._id} style={styles.transactionItem}>
+                <Text style={styles.transactionName}>{item.name} <Text style={{ color: '#888' }}>({item.categoryName})</Text></Text>
+                <Text style={styles.transactionAmount}>-${item.amount.toLocaleString()}</Text>
               </View>
             ))
           ) : (

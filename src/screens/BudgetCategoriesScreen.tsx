@@ -3,63 +3,55 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useAppContext } from '../context/AppContext';
-import { BudgetCategory } from '../types';
+import { MonthlyBudgetCategory } from '../types';
 import BudgetCategoryForm from '../components/BudgetCategoryForm';
 
 const BudgetCategoriesScreen = () => {
-  const { budgetCategories, loading, error, addBudgetCategory, updateBudgetCategory, deleteBudgetCategory } = useAppContext();
+  const { monthlyBudget, loading, error, updateMonthlyBudgetCategories } = useAppContext();
   const [formVisible, setFormVisible] = useState(false);
-  const [editCategory, setEditCategory] = useState<BudgetCategory | null>(null);
+  const [editCategory, setEditCategory] = useState<MonthlyBudgetCategory | null>(null);
 
   const handleAdd = () => {
     setEditCategory(null);
     setFormVisible(true);
   };
 
-  const handleEdit = (category: BudgetCategory) => {
+  const handleEdit = (category: MonthlyBudgetCategory) => {
     setEditCategory(category);
     setFormVisible(true);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (name: string) => {
+    if (!monthlyBudget) return;
     Alert.alert('Delete Category', 'Are you sure?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteBudgetCategory(id) },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        const updated = monthlyBudget.categories.filter(c => c.name !== name);
+        await updateMonthlyBudgetCategories(updated);
+      } },
     ]);
   };
 
-  const handleSubmit = async (data: { name: string; budget: number; spent: number }) => {
+  const handleSubmit = async (data: { name: string; budget: number }) => {
+    if (!monthlyBudget) return;
+    let updated;
     if (editCategory) {
-      await updateBudgetCategory({ ...editCategory, ...data });
+      updated = monthlyBudget.categories.map(c => c.name === editCategory.name ? { ...c, ...data } : c);
     } else {
-      await addBudgetCategory(data);
+      updated = [...monthlyBudget.categories, data];
     }
+    await updateMonthlyBudgetCategories(updated);
     setFormVisible(false);
   };
 
-  const renderCategoryItem = ({ item }: { item: BudgetCategory }) => {
-    const percentage = (item.spent / item.budget) * 100;
+  const renderCategoryItem = ({ item }: { item: MonthlyBudgetCategory }) => {
     return (
-      <TouchableOpacity style={styles.categoryItem} onPress={() => handleEdit(item)} onLongPress={() => handleDelete(item.id)}>
+      <TouchableOpacity style={styles.categoryItem} onPress={() => handleEdit(item)} onLongPress={() => handleDelete(item.name)}>
         <View style={styles.categoryHeader}>
           <Text style={styles.categoryName}>{item.name}</Text>
           <Text style={styles.categoryAmount}>
-            ${item.spent.toFixed(2)} / ${item.budget.toFixed(2)}
+            ${item.budget.toFixed(2)}
           </Text>
-        </View>
-        <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progress, 
-                { 
-                  width: `${percentage}%`,
-                  backgroundColor: percentage > 90 ? '#e53935' : percentage > 75 ? '#ff9800' : '#2e7d32'
-                }
-              ]} 
-            />
-          </View>
-          <Text style={styles.progressText}>{percentage.toFixed(0)}% spent</Text>
         </View>
       </TouchableOpacity>
     );
@@ -73,11 +65,11 @@ const BudgetCategoriesScreen = () => {
       </View>
       {loading && <ActivityIndicator size="large" color="#2e7d32" style={{ margin: 20 }} />}
       {error && <Text style={{ color: 'red', textAlign: 'center', margin: 10 }}>{error}</Text>}
-      {budgetCategories.length > 0 ? (
+      {monthlyBudget && monthlyBudget.categories.length > 0 ? (
         <FlatList
-          data={budgetCategories}
+          data={monthlyBudget.categories}
           renderItem={renderCategoryItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.name}
           contentContainerStyle={styles.listContainer}
         />
       ) : !loading ? (
@@ -92,7 +84,7 @@ const BudgetCategoriesScreen = () => {
         visible={formVisible}
         onClose={() => setFormVisible(false)}
         onSubmit={handleSubmit}
-        initial={editCategory ? { name: editCategory.name, budget: editCategory.budget, spent: editCategory.spent } : undefined}
+        initial={editCategory ? { name: editCategory.name, budget: editCategory.budget } : undefined}
       />
     </View>
   );

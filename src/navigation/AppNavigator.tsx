@@ -5,8 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import screens
 import HomeScreen from '../screens/HomeScreen';
-import BudgetCategoriesScreen from '../screens/BudgetCategoriesScreen';
+import BudgetScreen from '../screens/BudgetScreen';
 import InvestmentsScreen from '../screens/InvestmentsScreen';
+import BudgetItemsScreen from '../screens/BudgetItemsScreen';
 
 // Create bottom tab navigator
 const Tab = createBottomTabNavigator();
@@ -35,9 +36,10 @@ const AppNavigator = () => {
           headerShown: false,
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Budget" component={BudgetCategoriesScreen} />
-        <Tab.Screen name="Investments" component={InvestmentsScreen} />
+  <Tab.Screen name="Home" component={HomeScreen} />
+  <Tab.Screen name="Budget" component={BudgetScreen} />
+  <Tab.Screen name="Transactions" component={BudgetItemsScreen} />
+  <Tab.Screen name="Investments" component={InvestmentsScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );

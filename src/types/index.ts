@@ -1,9 +1,45 @@
-// Budget Category Types
+// Budget Category Types (legacy, for reference)
 export interface BudgetCategory {
   id: string;
   name: string;
   budget: number;
   spent: number;
+}
+
+// New Overall Plan and Monthly Budget Types
+export interface OverallPlanCategory {
+  name: string;
+  defaultBudget: number;
+}
+
+export interface OverallPlan {
+  _id: string;
+  name: string;
+  userId: string;
+  categories: OverallPlanCategory[];
+}
+
+export interface MonthlyBudgetCategory {
+  name: string;
+  budget: number;
+}
+
+export interface BudgetItem {
+  _id: string;
+  categoryName: string;
+  name: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+
+export interface MonthlyBudget {
+  _id: string;
+  month: number;
+  year: number;
+  userId: string;
+  categories: MonthlyBudgetCategory[];
+  items: BudgetItem[];
 }
 
 // Investment Types

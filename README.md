@@ -1,3 +1,4 @@
+
 # MoneyManager
 
 ## Environment Variables
@@ -28,4 +29,45 @@ A `.env.example` file is provided to show the required variables. Copy and fill 
 
 ---
 
-For more details, see the backend setup section in this README or ask for help.
+
+---
+
+## Running the Application
+
+### 1. Backend (API Server)
+
+Open a terminal and run the following commands:
+
+```bash
+cd backend
+# Install dependencies (first time only)
+npm install
+# Start in development mode (auto-reloads on changes)
+npm run dev
+# Or build and run in production mode:
+npm run build
+npm start
+```
+
+The backend will start on `http://localhost:5000` by default.
+
+### 2. Frontend (React Native/Expo App)
+
+Open a new terminal in the project root and run:
+
+```bash
+# Install dependencies (first time only)
+npm install
+# Start the Expo app (choose platform in Expo UI)
+npm start
+# Or run directly on a device/emulator:
+npm run android   # for Android
+npm run ios       # for iOS
+npm run web       # for Web
+```
+
+The Expo Dev Tools UI will open in your browser. Follow the instructions to run on your device, simulator, or web browser.
+
+---
+
+**Tip:** Ensure your backend is running before using the app, so the frontend can connect to the API.

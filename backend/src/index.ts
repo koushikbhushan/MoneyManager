@@ -13,15 +13,21 @@ app.use(cors());
 app.use(express.json());
 
 
+
 import budgetCategoriesRouter from './routes/budgetCategories';
 import investmentsRouter from './routes/investments';
+import monthlyBudgetRouter from './routes/monthlyBudget';
+import overallPlanRouter from './routes/overallPlan';
 
 app.get('/', (req, res) => {
   res.send('MoneyManager backend is running!');
 });
 
+
 app.use('/api/budget-categories', budgetCategoriesRouter);
 app.use('/api/investments', investmentsRouter);
+app.use('/api/monthly-budget', monthlyBudgetRouter);
+app.use('/api/overall-plan', overallPlanRouter);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI || '', {
